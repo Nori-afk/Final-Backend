@@ -1050,3 +1050,20 @@ body { display: flex; min-height: 100vh; }
     .am-table th:nth-child(4),
     .am-table td:nth-child(4) { display: none; }
 }
+
+.select-wrapper {
+    width: 100%;
+}
+.select-wrapper select {
+  width: 100%;
+  padding: 13px 40px 13px 14px;
+  border: 1.5px solid var(--border-input);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-input-alt);
+  outline: none;
+  cursor: pointer;
+}

@@ -4,7 +4,7 @@
   Feature: Vet selection + 4-step booking form + history
   CSS:     variables.css → components.css → book-appointment.css
   JS:      nav.js → api.js → book-appointment.js
-
+book-appointment.html
   TODO backend:
   - s4Confirm: api.bookAppointment(data) then show step 5
   - pageHistory: api.getAppointments() to populate rows
@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
   <!-- 1. Design tokens (ALWAYS first) -->
   <link rel="stylesheet" href="../css/variables.css"/>
   <!-- 2. Shared components -->
@@ -45,8 +46,8 @@
       </button>
       <div class="nav-user-pill" onclick="toggleUserMenu()">
         <div class="nav-user-info">
-          <span class="nav-user-name">Mark Depa</span>
-          <span class="nav-user-role">Pet Owner</span>
+          <span class="nav-user-name"></span>
+          <span class="nav-user-role">Pet owner</span>
         </div>
       <img src="../images/img/account-avatar.png" alt="User" class="nav-user-avatar"/>
     </div>
@@ -187,27 +188,11 @@
 
       <!-- Calendar -->
       <div class="vet-right-col">
-        <div class="vet-calendar-card">
-          <div class="cal-title">Calendar</div>
-          <div class="cal-header">
-            <div class="cal-month">October 2026</div>
-            <div class="cal-nav">
-              <button class="cal-btn">
-                <img src="../images/icons/calendar-left.svg" alt="prev"/>
-              </button>
-              <button class="cal-btn">
-                <img src="../images/icons/calendar-right.svg" alt="next"/>
-              </button>
-            </div>
-          </div>
-          <div class="cal-grid">
-            <div class="cal-day-label">MO</div><div class="cal-day-label">TU</div><div class="cal-day-label">WE</div>
-            <div class="cal-day-label">TH</div><div class="cal-day-label">FR</div><div class="cal-day-label">SA</div><div class="cal-day-label">SU</div>
-            <div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day today">12</div>
-            <div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div>
-            <div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div>
-            <div class="cal-day">20</div><div class="cal-day">21</div><div class="cal-day">22</div><div class="cal-day">23</div>
-          </div>
+  <div class="vet-calendar-card">
+    <div class="cal-title">Calendar</div>
+    <div id="calendar"></div>
+  </div>
+</div>
 
           <div class="hours-title">Available Hours</div>
           <div class="hours-legend">
@@ -708,14 +693,22 @@
       </div>
     </div>
   </footer>
-  <!-- ══ SCRIPTS — auth.js MUST be first ══ -->
-  <script src="../../shared/js/auth.js"></script>
+  ══ SCRIPTS — auth.js MUST be first ══
+  <!-- <script src="../../shared/js/auth.js"></script>
   <script>
     /* Route guard — redirects wrong role to their home */
     guardPage([ROLES.PET_OWNER]);
   </script>
   <script src="../js/nav.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/book-appointment.js"></script>
+ 
+  <script src="../js/book-appointment.js"></script> -->
+<script src="/withbackend/BVETTER-MAIN/shared/js/auth.js"></script>
+<script src="/withbackend/BVETTER-MAIN/shared/js/sidebar.js"></script> 
+<script src="../js/api.js"></script>
+  <script src="../js/nav.js"></script>
+ <script src="../js/book-appointment.js"></script> 
+<script src="/withbackend/BVETTER-MAIN/vet/js/appointment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
 </body>
 </html>

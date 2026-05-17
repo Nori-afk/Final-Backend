@@ -204,9 +204,9 @@
                 <div class="am-form-row">
                     <div class="am-form-group">
                         <label class="am-label" for="add-role">Role</label>
-                        <select class="am-input" id="add-role">
-                            <option value="vet">Veterinarian</option>
-                            <option value="owner">Pet Owner</option>
+                        <select class="am-input" id="add-role" required>
+                            <option value="">Select a role</option>
+                            <option value="veterinarian">Veterinarian</option>
                             <option value="admin">Administrator</option>
                         </select>
                     </div>
@@ -233,6 +233,36 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
+            <div class="am-form-group full">
+            <label class="am-label" for="reg_barangay">Barangay</label>
+            <div class="select-wrapper">
+              <select class="am-input" id="reg_barangay" name="barangay">
+                <!-- <option value="">Select Barangay</option>
+                <option value="bagong_nayon">Bagong Nayon</option>
+                <option value="burol">Burol</option>
+                <option value="calasag">Calasag</option>
+                <option value="camalig">Camalig</option>
+                <option value="canalate">Canalate</option>
+                <option value="caniogan">Caniogan</option>
+                <option value="entablado">Entablado</option>
+                <option value="lote">Lote</option>
+                <option value="maasim">Maasim</option>
+                <option value="pagala">Pagala</option>
+                <option value="paitan">Paitan</option>
+                <option value="piel">Piel</option>
+                <option value="pinagbarilan">Pinagbarilan</option>
+                <option value="poblacion">Poblacion</option>
+                <option value="san_jose">San Jose</option>
+                <option value="san_roque">San Roque</option>
+                <option value="santissima_trinidad">Santissima Trinidad</option>
+                <option value="santo_cristo">Santo Cristo</option>
+                <option value="subic">Subic</option>
+                <option value="tangos">Tangos</option>
+                <option value="tibag">Tibag</option>
+                <option value="tilapayong">Tilapayong</option> -->
+              </select>
+            </div>
+          </div>
                 </div>
             </div>
 
@@ -273,9 +303,8 @@
                 <div class="am-form-row">
                     <div class="am-form-group">
                         <label class="am-label" for="edit-role">Role</label>
-                        <select class="am-input" id="edit-role">
-                            <option value="vet">Veterinarian</option>
-                            <option value="owner">Pet Owner</option>
+                        <select class="am-input" id="edit-role" required>
+                            <option value="veterinarian">Veterinarian</option>
                             <option value="admin">Administrator</option>
                         </select>
                     </div>
@@ -477,8 +506,8 @@
         </div>
     </div>
 
-    <script src="../../shared/js/auth.js"></script>
-    <script>VBetterAuth.requireAuth(['admin']);</script>
+    <!-- <script src="../../shared/js/auth.js"></script>
+    <script>VBetterAuth.requireAuth(['admin']);</script> -->
     <script src="../../shared/js/sidebar.js"></script>
     <script src="../js/account-management.js"></script>
 </body>

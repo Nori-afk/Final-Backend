@@ -18,12 +18,12 @@
 const SESSION_KEY = 'vbetter_session';
 
 const ROLE_ROUTES = {
-    vet:   '/vet/html/index.html',
-    admin: '/admin/pages/index.html',
-    owner: '/public/pages/landing.html'
+    vet:   '/withbackend/BVETTER-MAIN/vet/html/index.html',
+    admin: '/withbackend/BVETTER-MAIN/admin/pages/index.html',//index.html
+    owner: '/withbackend/BVETTER-MAIN/public/pages/landing.html'
 };
 
-const LOGIN_PAGE = '/public/pages/login.html';
+const LOGIN_PAGE = '/withbackend/BVETTER-MAIN/public/pages/login.html';
 
 /* ── Session helpers ────────────────────────────────────────── */
 function getSession() {
@@ -35,6 +35,14 @@ function getSession() {
 
 function setSession(session) {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+function setToken(token) {
+    if (token) {
+        sessionStorage.setItem('bvetter_token', token);
+    } else {
+        sessionStorage.removeItem('bvetter_token');
+    }
 }
 
 function clearSession() {
@@ -113,8 +121,32 @@ async function login(email, password) {
     };
 
     setSession(session);
+    setToken(session.token);
     return { ok: true, session };
     /* ── END MOCK ── */
+}
+
+function loginAs(userData) {
+    const roleMap = {
+        admin: 'admin',
+        vet_staff: 'vet',
+        vet: 'vet',
+        pet_owner: 'owner',
+        owner: 'owner',
+        user: 'owner'
+    };
+
+    const session = {
+        userId: userData.id,
+        role: roleMap[userData.role] || 'owner',
+        name: userData.name,
+        token: userData.token,
+        email: userData.email || ''
+    };
+
+    setSession(session);
+    setToken(userData.token);
+    redirectToDashboard(session.role);
 }
 
 function redirectToDashboard(role) {
@@ -134,7 +166,8 @@ function autoRoute() {
 
 /* ── Exports ────────────────────────────────────────────────── */
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getCurrentUser, requireAuth, login, logout, redirectToDashboard, autoRoute, getSession };
+    module.exports = { getCurrentUser, requireAuth, login, loginAs, logout, redirectToDashboard, autoRoute, getSession };
 } else {
-    window.VBetterAuth = { getCurrentUser, requireAuth, login, logout, redirectToDashboard, autoRoute, getSession };
+    window.VBetterAuth = { getCurrentUser, requireAuth, login, loginAs, logout, redirectToDashboard, autoRoute, getSession };
 }
+

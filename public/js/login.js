@@ -21,33 +21,39 @@ function togglePassword() {
 }
 
 /* ── Login handler ─────────────────────────── */
-function handleLogin() {
-  const email    = document.getElementById('loginEmail')?.value.trim() || '';
-  const password = document.getElementById('loginPassword')?.value || '';
 
-  if (!email || !password) {
-    alert('Please enter your email and password.');
-    return;
-  }
+async function handleLogin() {
+    const email    = document.getElementById('loginEmail')?.value.trim() || '';
+    const password = document.getElementById('loginPassword')?.value || '';
+    
+    if (!email || !password) {
+        alert('Please enter your email and password.');
+        return;
+    }
 
-  // Roles MUST match what auth.js ROLE_ROUTES expects:
-  // 'owner' → /public/pages/landing.html
-  // 'vet'   → /vet/html/index.html
-  // 'admin' → /admin/pages/dashboard.html
-  const mockUsers = {
-    'owner@test.com': { userId: 1, name: 'Mark Depa',   role: 'owner', token: 'mock-token-owner' },
-    'vet@test.com':   { userId: 2, name: 'Dr. Aris V.', role: 'vet',   token: 'mock-token-vet'   },
-    'admin@test.com': { userId: 3, name: 'Admin User',  role: 'admin', token: 'mock-token-admin' },
-  };
+   const res = await api.login(email,password);
 
-  const user = mockUsers[email.toLowerCase()];
+    if (res.success) {
+        loginAs  ({
+            id:    res.user.user_id,
+            name:  res.user.first_name + ' ' + res.user.last_name,
+            role:  mapRole(res.user.role),
+            token: res.token,
+            email: res.user.email,
+    });
+    console.log('Login successful:', res);
+    // window.location.href = api.getRedirectUrl(res.user.role);
+   
+    } else {
+        alert(res.message);
+    }
+}
 
-  if (user) {
-    // Save session the same way auth.js expects it
-    sessionStorage.setItem('vbetter_session', JSON.stringify(user));
-    // Then redirect based on role
-    VBetterAuth.redirectToDashboard(user.role);
-  } else {
-    alert('Invalid credentials. Try owner@test.com, vet@test.com, or admin@test.com');
-  }
+function mapRole(dbRole) {
+    const map = {
+        'Pet owner':      'Pet owner',
+        'veterinarian': 'veterinarian',
+        'admin':     'admin',
+    };
+    return map[dbRole] || 'Pet owner';
 }

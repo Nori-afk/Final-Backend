@@ -41,7 +41,7 @@
 
 /* ── Base URL ─────────────────────────────────
    TODO: Change to production URL before deploy   */
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'http://localhost/withbackend/BVETTER-MAIN/backend'; // DEV URL (XAMPP localhost)
 
 /* ── Auth Header Builder ──────────────────────
    Reads JWT token saved on login.
@@ -62,7 +62,7 @@ function authHeadersFormData() {
 }
 
 const api = {
-
+  
   /* ══════════════════════════════════════════
      AUTH
      ══════════════════════════════════════════ */
@@ -74,17 +74,18 @@ const api = {
    * @param {string} password
    */
   login: (email, password) =>
-    fetch(`${API_BASE}/auth/login`, {
+    fetch(`${API_BASE}/auth/login.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
+      
     }).then(r => r.json()),
 
   /**
    * Logout — invalidates token on server
    */
   logout: () =>
-    fetch(`${API_BASE}/auth/logout`, {
+    fetch(`${API_BASE}/logout`, {
       method: 'POST',
       headers: authHeaders()
     }).then(r => r.json()),
@@ -94,7 +95,7 @@ const api = {
    * @param {Object} data — { full_name, email, password, barangay }
    */
   register: (data) =>
-    fetch(`${API_BASE}/auth/register`, {
+    fetch(`${API_BASE}/auth/register.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -122,26 +123,39 @@ const api = {
    * Replaces: const petData = [...] in lost-found.js
    */
   getReports: (filters = {}) =>
-    fetch(`${API_BASE}/reports?${new URLSearchParams(filters)}`, {
-      headers: authHeaders()
-    }).then(r => r.json()),
+    // combined lost + found list
+    Promise.all([
+      fetch(`${API_BASE}/lost_pet.php`).then(r => r.json()),
+      fetch(`${API_BASE}/found_pet.php`).then(r => r.json())
+    ]).then(([lostRes, foundRes]) => {
+      const lost = (lostRes && lostRes.lost_list) ? lostRes.lost_list.map(r => ({ ...r, status: 'lost' })) : [];
+      const found = (foundRes && foundRes.found_list) ? foundRes.found_list.map(r => ({ ...r, status: 'found' })) : [];
+      return { success: true, reports: lost.concat(found) };
+    }),
 
   /**
    * Get single report — used in lost-found-detail.html
    * @param {string} id — report ID from URL ?id=
    */
   getReportById: (id) =>
-    fetch(`${API_BASE}/reports/${id}`, {
-      headers: authHeaders()
-    }).then(r => r.json()),
+    // try lost then found
+    fetch(`${API_BASE}/lost_pet.php?id=${id}`).then(r => r.json()).then(l => {
+      if (l && l.success && l.lost) return { success: true, type: 'lost', report: l.lost };
+      return fetch(`${API_BASE}/found_pet.php?id=${id}`).then(r => r.json()).then(f => ({ success: true, type: 'found', report: f.found }));
+    }),
 
   /**
    * Get current user's own reports — My Reports tab
    */
   getMyReports: () =>
-    fetch(`${API_BASE}/reports/mine`, {
-      headers: authHeaders()
-    }).then(r => r.json()),
+    Promise.all([
+      fetch(`${API_BASE}/lost_pet.php`).then(r => r.json()),
+      fetch(`${API_BASE}/found_pet.php`).then(r => r.json())
+    ]).then(([lostRes, foundRes]) => {
+      const lost = (lostRes && lostRes.lost_list) ? lostRes.lost_list.map(r => ({ ...r, status: 'lost' })) : [];
+      const found = (foundRes && foundRes.found_list) ? foundRes.found_list.map(r => ({ ...r, status: 'found' })) : [];
+      return { success: true, reports: lost.concat(found) };
+    }),
 
   /**
    * Get Jaccard Similarity matches for a lost report
@@ -158,11 +172,21 @@ const api = {
    * @param {FormData} formData — use FormData, NOT JSON (photo upload)
    */
   submitReport: (type, formData) =>
-    fetch(`${API_BASE}/reports/${type}`, {
-      method: 'POST',
-      headers: authHeadersFormData(),
-      body: formData
-    }).then(r => r.json()),
+    // convert FormData to JSON-compatible object if needed
+    new Promise((resolve, reject) => {
+      let obj = {};
+      if (formData instanceof FormData) {
+        for (const [k, v] of formData.entries()) obj[k] = v;
+      } else if (typeof formData === 'object') {
+        obj = formData;
+      }
+      const url = type === 'lost' ? `${API_BASE}/lost_pet.php` : `${API_BASE}/found_pet.php`;
+      fetch(url, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(obj)
+      }).then(r => r.json()).then(resolve).catch(reject);
+    }),
 
 
   /* ══════════════════════════════════════════
@@ -174,11 +198,18 @@ const api = {
    * @param {FormData} formData
    */
   submitSighting: (formData) =>
-    fetch(`${API_BASE}/sightings`, {
-      method: 'POST',
-      headers: authHeadersFormData(),
-      body: formData
-    }).then(r => r.json()),
+    // accepts FormData or object
+    new Promise((resolve, reject) => {
+      let obj = {};
+      if (formData instanceof FormData) {
+        for (const [k, v] of formData.entries()) obj[k] = v;
+      } else if (typeof formData === 'object') obj = formData;
+      fetch(`${API_BASE}/sighting.php`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(obj)
+      }).then(r => r.json()).then(resolve).catch(reject);
+    }),
 
 
   /* ══════════════════════════════════════════
@@ -190,9 +221,7 @@ const api = {
    * Replaces: static rows in my-claims.html
    */
   getClaims: () =>
-    fetch(`${API_BASE}/claims`, {
-      headers: authHeaders()
-    }).then(r => r.json()),
+    fetch(`${API_BASE}/claim.php`, { headers: authHeaders() }).then(r => r.json()),
 
   /**
    * Submit ownership claim with proof documents
@@ -200,11 +229,16 @@ const api = {
    * @param {FormData} formData — includes proof files
    */
   submitClaim: (reportId, formData) => {
-    formData.append('report_id', reportId);
-    return fetch(`${API_BASE}/claims`, {
+    // formData may be FormData or plain object
+    let obj = {};
+    if (formData instanceof FormData) {
+      for (const [k, v] of formData.entries()) obj[k] = v;
+    } else if (typeof formData === 'object') obj = formData;
+    obj.report_id = reportId;
+    return fetch(`${API_BASE}/claim.php`, {
       method: 'POST',
-      headers: authHeadersFormData(),
-      body: formData
+      headers: authHeaders(),
+      body: JSON.stringify(obj)
     }).then(r => r.json());
   },
 
@@ -213,9 +247,10 @@ const api = {
    * @param {string} claimId
    */
   resolveClaim: (claimId) =>
-    fetch(`${API_BASE}/claims/${claimId}/resolve`, {
+    fetch(`${API_BASE}/claim.php?id=${claimId}`, {
       method: 'PATCH',
-      headers: authHeaders()
+      headers: authHeaders(),
+      body: JSON.stringify({ Claim_Status: 'approved' })
     }).then(r => r.json()),
 
 
@@ -228,16 +263,14 @@ const api = {
    * Replaces: static appt rows in book-appointment.html
    */
   getAppointments: () =>
-    fetch(`${API_BASE}/appointments`, {
-      headers: authHeaders()
-    }).then(r => r.json()),
+    fetch(`${API_BASE}/appointment.php`, { headers: authHeaders() }).then(r => r.json()),
 
   /**
    * Book a new appointment
    * @param {Object} data — { owner, pet, visit_type, date, time, notes }
    */
   bookAppointment: (data) =>
-    fetch(`${API_BASE}/appointments`, {
+    fetch(`${API_BASE}/appointment.php`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(data)
@@ -302,4 +335,10 @@ const api = {
       headers: authHeaders(),
       body: JSON.stringify(data)
     }).then(r => r.json()),
+
+  getBarangays: () =>
+    fetch(`${API_BASE}/barangay.php`).then(r => r.json()),
+
 };
+
+

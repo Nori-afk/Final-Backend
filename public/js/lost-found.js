@@ -193,15 +193,25 @@ function openModal(type) {
 }
 
 function submitReport() {
-  /* TODO backend:
-     const formData = new FormData();
-     formData.append('photo', document.getElementById('petPhoto').files[0]);
-     const res = await api.submitReport(currentReportType, formData);
-  */
-  closeModal('reportModal');
-  setTimeout(() => {
-    openModalById(currentReportType === 'lost' ? 'lostSuccessModal' : 'foundSuccessModal');
-  }, 150);
+  // collect form values from modal
+  const obj = {};
+  obj.user_ID = getCurrentUser() ? getCurrentUser().id : 1;
+  obj.Date_lost = document.getElementById('reportDate')?.value || document.getElementById('reportDateFound')?.value || null;
+  obj.Pet_name = document.getElementById('reportPetName')?.value || null;
+  obj.Pet_type = document.getElementById('reportPetType')?.value || null;
+  obj.Sex = document.querySelector('.sex-toggle .sex-btn.active')?.dataset.value || null;
+  obj.Address_Lost = document.getElementById('reportAddress')?.value || null;
+  obj.Description = document.getElementById('reportNotes')?.value || null;
+
+  api.submitReport(currentReportType, obj).then(res => {
+    closeModal('reportModal');
+    setTimeout(() => {
+      openModalById(currentReportType === 'lost' ? 'lostSuccessModal' : 'foundSuccessModal');
+    }, 150);
+  }).catch(err => {
+    console.error(err);
+    alert('Could not submit report.');
+  });
 }
 
 /* ── Mock Pet Data ───────────────────────────
@@ -293,9 +303,16 @@ function openSightingModal() {
 }
 
 function submitSighting() {
-  /* TODO backend: api.submitSighting(formData) */
-  closeModal('sightingModal');
-  setTimeout(() => openModalById('sightingSuccessModal'), 150);
+  const obj = {};
+  obj.user_ID = getCurrentUser() ? getCurrentUser().id : 1;
+  obj.Date_sighted = document.getElementById('sightingDate')?.value || null;
+  obj.time_sighted = document.getElementById('sightingTime')?.value || null;
+  obj.location_sighted = document.getElementById('sightingLocation')?.value || null;
+  obj.description = document.getElementById('sightingNotes')?.value || null;
+  api.submitSighting(obj).then(res => {
+    closeModal('sightingModal');
+    setTimeout(() => openModalById('sightingSuccessModal'), 150);
+  }).catch(err => { console.error(err); alert('Could not submit sighting'); });
 }
 
 function openClaimModal() {
@@ -305,8 +322,12 @@ function openClaimModal() {
 
 /* ── Claim (from matches panel only) ─────── */
 function submitClaim() {
-  closeModal('claimModal');
-  setTimeout(() => openModalById('claimSuccessModal'), 150);
+  const reportId = document.getElementById('claimReportId')?.value || null;
+  const formObj = { proof: document.querySelector('.proof-option.active')?.dataset.value || null };
+  api.submitClaim(reportId, formObj).then(res => {
+    closeModal('claimModal');
+    setTimeout(() => openModalById('claimSuccessModal'), 150);
+  }).catch(err => { console.error(err); alert('Could not submit claim'); });
 }
 
 function selectProof(btn) {

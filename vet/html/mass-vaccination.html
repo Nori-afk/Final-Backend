@@ -7,9 +7,6 @@
     <title>VBetter | Mass Vaccination</title>
     <link rel="stylesheet" href="/FINAL-BACKEND(VBETTER)/Final-Backend/shared/css/sidebar.css">
     <link rel="stylesheet" href="/FINAL-BACKEND(VBETTER)/Final-Backend/vet/css/mass-vaccination.css">
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <script src="/shared/js/sidebar.js" defer></script>
-    <script src="/vet/js/mass-vaccination.js" defer></script> -->
 </head>
 
 <body>
@@ -51,7 +48,6 @@
                     <img src="/FINAL-BACKEND(VBETTER)/Final-Backend/shared/images/sidebar/mass-vacc.svg" class="nav-icon" alt="Mass Vaccination">
                     <span class="nav-label">Mass Vaccination</span>
                 </a>
-                <!-- ADMIN-ONLY section: sidebar.js hides these for vet role -->
                 <div class="nav-section-label" data-roles="admin">Administration</div>
                 <a href="/FINAL-BACKEND(VBETTER)/Final-Backend/admin/pages/account-management.html" class="nav-item" title="Account Management" data-roles="admin">
                     <img src="/FINAL-BACKEND(VBETTER)/Final-Backend/shared/images/sidebar/acc-management.svg" class="nav-icon" alt="Account Management">
@@ -101,6 +97,10 @@
                         <small class="metric-note">Events awaiting data</small>
                     </article>
                 </section>
+
+                <!-- ARIMA Vaccine Demand Forecast card — filled by renderArimaCard() in JS -->
+                <!-- Visible only when the Python ARIMA service is running -->
+                <div id="arima-card-placeholder"></div>
 
                 <section class="chart-grid">
                     <article class="card chart-card span-2">
@@ -267,9 +267,9 @@
                 <input id="event-date" name="date" type="date" required>
 
                <label for="event-barangay">Barangay *</label>
-<select id="event-barangay" name="barangay" required>
-    <option value="">Select Barangay…</option>
-</select>
+                <select id="event-barangay" name="barangay" required>
+                    <option value="">Select Barangay…</option>
+                </select>
 
                 <label for="event-vaccine">Vaccine Type *</label>
                 <select id="event-vaccine" name="vaccine" required>
@@ -288,8 +288,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- <script src="/FINAL-BACKEND(VBETTER)/Final-Backend/shared/js/auth.js"></script> -->
-    <!-- <script>VBetterAuth.requireAuth(['vet']);</script> -->
     <script src="/FINAL-BACKEND(VBETTER)/Final-Backend/shared/js/sidebar.js"></script>
     <script src="/FINAL-BACKEND(VBETTER)/Final-Backend/vet/js/mass-vaccination.js"></script>
 

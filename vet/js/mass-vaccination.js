@@ -91,30 +91,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         return rows;
     }
 
-    // ── NEW: Build a live DB totals map per barangay from filtered events ─
+    // ── Build a live DB totals map per barangay from filtered events ─────
     // Returns { [barangay]: { dogs, cats, others, total } }
+    // IMPORTANT: dogs/cats/others are ONLY set when the vet explicitly entered
+    // a species breakdown. If no breakdown was entered, they stay 0 and only
+    // total is set. We never fabricate species splits from a grand total.
     function getDbBarangayTotals(range) {
         var totals = {};
         getFilteredEvents(range).forEach(function(e) {
             if (!e.barangay) return;
-            var tv = Number(e.totalVaccinated) || 0;
-            if (tv === 0 && e.breakdown) {
-                tv = (Number(e.breakdown.dogs) || 0)
-                   + (Number(e.breakdown.cats) || 0)
-                   + (Number(e.breakdown.others) || 0);
-            }
+
+            var dogs   = Number(e.breakdown?.dogs)   || 0;
+            var cats   = Number(e.breakdown?.cats)   || 0;
+            var others = Number(e.breakdown?.others) || 0;
+            var hasBreakdown = dogs > 0 || cats > 0 || others > 0;
+
+            // Total: use breakdown sum when available, otherwise totalVaccinated field
+            var tv = hasBreakdown
+                ? dogs + cats + others
+                : Number(e.totalVaccinated) || 0;
+
+            if (tv === 0) return; // nothing to count yet — pending report
+
             if (!totals[e.barangay]) totals[e.barangay] = { dogs: 0, cats: 0, others: 0, total: 0 };
             var entry = totals[e.barangay];
-            if (e.breakdown && (e.breakdown.dogs || e.breakdown.cats || e.breakdown.others)) {
-                entry.dogs   += Number(e.breakdown.dogs)   || 0;
-                entry.cats   += Number(e.breakdown.cats)   || 0;
-                entry.others += Number(e.breakdown.others) || 0;
-            } else {
-                // Distribute proportionally when no breakdown: 60% dogs, 30% cats, 10% others
-                entry.dogs   += Math.round(tv * 0.60);
-                entry.cats   += Math.round(tv * 0.30);
-                entry.others += Math.round(tv * 0.10);
+
+            if (hasBreakdown) {
+                entry.dogs   += dogs;
+                entry.cats   += cats;
+                entry.others += others;
             }
+            // When no breakdown: total is still counted, species stay 0
             entry.total += tv;
         });
         return totals;
@@ -362,8 +369,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ▶ Overall Trend: ${(tv.trend||'stable').toUpperCase()}
                </p>`;
 
-        var chartGrid = document.querySelector('.chart-grid');
-        if (chartGrid) chartGrid.parentNode.insertBefore(card, chartGrid);
+        // Target the dedicated placeholder in the HTML first (most reliable).
+        // Falls back to inserting before the first .chart-grid if placeholder absent.
+        var placeholder = document.getElementById('arima-card-placeholder');
+        if (placeholder) {
+            placeholder.innerHTML = '';
+            placeholder.appendChild(card);
+        } else {
+            var chartGrid = document.querySelector('#mass-vacc-dashboard .chart-grid');
+            if (chartGrid) chartGrid.parentNode.insertBefore(card, chartGrid);
+        }
     };
 
     // ── Charts ────────────────────────────────────────────────────────────
@@ -441,18 +456,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // Merge Excel historical + live DB per species into 3 clean legend entries
-            var mergedDogs  = labels.map((_, i) => (dogsD[i]  || 0) + (dbDogsD[i]  || 0));
-            var mergedCats  = labels.map((_, i) => (catsD[i]  || 0) + (dbCatsD[i]  || 0));
-            var mergedOther = labels.map((_, i) => (otherD[i] || 0) + (dbOtherD[i] || 0));
+            // Merge Excel historical + live DB per species into clean legend entries.
+            // DB events with no species breakdown go into a separate "Unspecified" bar
+            // rather than being fabricated into dogs/cats/others.
+            var mergedDogs    = labels.map((_, i) => (dogsD[i]  || 0) + (dbDogsD[i]  || 0));
+            var mergedCats    = labels.map((_, i) => (catsD[i]  || 0) + (dbCatsD[i]  || 0));
+            var mergedOther   = labels.map((_, i) => (otherD[i] || 0) + (dbOtherD[i] || 0));
 
-            var hasLiveData = dbDogsD.some(v => v > 0) || dbCatsD.some(v => v > 0) || dbOtherD.some(v => v > 0);
+            // Unspecified = DB total minus the breakdown portion (events with no species data)
+            var dbTotalsArr   = labels.map((_, i) => {
+                var b = dbBarangayTotals[labels[i]] || {};
+                var breakdownSum = (dbDogsD[i] || 0) + (dbCatsD[i] || 0) + (dbOtherD[i] || 0);
+                return Math.max(0, (b.total || 0) - breakdownSum);
+            });
+            var hasUnspecified = dbTotalsArr.some(v => v > 0);
+            var hasLiveData    = dbDogsD.some(v => v > 0) || dbCatsD.some(v => v > 0)
+                              || dbOtherD.some(v => v > 0) || hasUnspecified;
 
             var datasets = [
                 { label: 'Dogs',   data: mergedDogs,  backgroundColor: '#0f2a6d' },
                 { label: 'Cats',   data: mergedCats,  backgroundColor: '#2f9df0' },
                 { label: 'Others', data: mergedOther, backgroundColor: '#1728d9' },
             ];
+            // Only add Unspecified dataset when there are events without species breakdown
+            if (hasUnspecified) {
+                datasets.push({
+                    label: 'Unspecified (no breakdown entered)',
+                    data: dbTotalsArr,
+                    backgroundColor: '#94a3b8'
+                });
+            }
 
             var chart1Title = hasLiveData
                 ? `Vaccinated per Barangay — ${range} (includes ${dbGrandTotal.toLocaleString()} live records)`
@@ -487,41 +520,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             var cats = state.arimaData?.cats_vaccinated  || {};
 
             if (tv.forecast?.length) {
-                // Build datasets for ARIMA forecast
+                // Chart 2: ARIMA forecast — Total predicted animals per month.
+                // Dogs/Cats detail is already shown in the ARIMA summary card above,
+                // so this chart stays clean with just Total + DB Actual reference.
+                var arimaMonths = tv.months || ['Next Month', 'Month 2', 'Month 3'];
+
                 var c2datasets = [
-                    { label: 'Total (ARIMA)', data: tv.forecast   || [], backgroundColor: '#0f2a6d' },
-                    { label: 'Dogs (ARIMA)',  data: dogs.forecast || [], backgroundColor: '#2f9df0' },
-                    { label: 'Cats (ARIMA)',  data: cats.forecast || [], backgroundColor: '#1728d9' },
+                    {
+                        label: 'Predicted Total (ARIMA)',
+                        data: tv.forecast || [],
+                        backgroundColor: '#0f2a6d',
+                        borderRadius: 4
+                    }
                 ];
 
-                // Add DB actual as a reference bar if we have it
+                // DB Actual: shown only for "Next Month" slot as a comparison point
                 if (dbGrandTotal > 0) {
-                    var dbActualData = (tv.months || ['Next Month','Month 2','Month 3']).map((_, i) => i === 0 ? dbGrandTotal : null);
                     c2datasets.push({
-                        label: `Actual DB (${range})`,
-                        data: dbActualData,
+                        label: `Actual Vaccinated (${range})`,
+                        data: arimaMonths.map((_, i) => i === 0 ? dbGrandTotal : null),
                         backgroundColor: '#22c55e',
-                        borderRadius: 4,
+                        borderRadius: 4
                     });
                 }
 
-                var arimaOrderStr = (tv.arima_order||[]).join(',');
+                var arimaOrderStr = (tv.arima_order || []).join(',');
+                var ciStr = `CI: ${tv.lower_ci?.[0] || 0}–${tv.upper_ci?.[0] || 0}`;
                 var c2Title = dbGrandTotal > 0
-                    ? `ARIMA(${arimaOrderStr}) Forecast — Actual DB: ${dbGrandTotal.toLocaleString()} this period`
-                    : `ARIMA(${arimaOrderStr}) Forecast — CI: ${tv.lower_ci?.[0]||0}–${tv.upper_ci?.[0]||0}`;
+                    ? `ARIMA(${arimaOrderStr}) Forecast — ${ciStr} | Actual this period: ${dbGrandTotal.toLocaleString()}`
+                    : `ARIMA(${arimaOrderStr}) Forecast — ${ciStr}`;
 
                 charts['predictedAnimals'] = new Chart(
                     document.getElementById('predictedAnimalsChart'), {
                     type: 'bar',
-                    data: {
-                        labels: tv.months || ['Next Month','Month 2','Month 3'],
-                        datasets: c2datasets
-                    },
+                    data: { labels: arimaMonths, datasets: c2datasets },
                     options: {
-                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         scales: {
-                            y: { ticks: { color: '#456084' }, grid: { display: false } },
-                            x: { beginAtZero: true, ticks: { color: '#456084' }, grid: { color: '#edf2f9' } }
+                            y: { beginAtZero: true, ticks: { color: '#456084' }, grid: { color: '#edf2f9' } },
+                            x: { ticks: { color: '#456084' }, grid: { display: false } }
                         },
                         plugins: {
                             legend: { position: 'bottom' },

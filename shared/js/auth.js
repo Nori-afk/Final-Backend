@@ -29,6 +29,7 @@ const LOGIN_PAGE = '/Final-backend(VBETTER)/Final-Backend/public/pages/login.htm
 function getSession() {
     try {
         const raw = sessionStorage.getItem(SESSION_KEY);
+        console.log(raw)
         return raw ? JSON.parse(raw) : null;
     } catch { return null; }
 }

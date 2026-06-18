@@ -418,3 +418,18 @@
         width:       100% !important;
     }
 }
+.sidebar-profile-avatar--initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;          /* match your existing avatar size */
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00b09b, #1a6b3c);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    /* user-select: none; */
+    letter-spacing: 0;
+}

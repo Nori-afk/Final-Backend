@@ -26,7 +26,7 @@
         'mass vaccination':       '/Final-backend(VBETTER)/Final-Backend/vet/html/mass-vaccination.html',
         // Admin-only — absolute paths
         'account management':     '/Final-backend(VBETTER)/Final-Backend/admin/pages/account-management.html',
-        'website management':     '/Final-backend(VBETTER)/Final-Backend/admin/pages/website-settings.html',
+        'website management':     '/Final-backend(VBETTER)/Final-Backend/admin/pages/', // input here the directory of the Website management.
     };
 
     const ACTIVE_ICON_CAPABLE = new Set([
@@ -55,6 +55,7 @@
         applyRoleVisibility(sidebar, role);
         buildToggleButton(sidebar);
         buildProfileCard(sidebar, session);
+        console.log(session);
 
         const navItems = Array.from(sidebar.querySelectorAll('.nav-item'));
         hydrateNavItems(navItems, role);
@@ -69,6 +70,7 @@
                 return window.VBetterAuth.getSession();
             }
             const raw = sessionStorage.getItem('vbetter_session');
+            console.log(raw)
             return raw ? JSON.parse(raw) : null;
         } catch { return null; }
     }
@@ -114,38 +116,42 @@
 
     /* ── Profile card — ALWAYS from session, never "Guest" ───── */
     function buildProfileCard(sidebar, session) {
-        const footer = sidebar.querySelector('.sidebar-footer');
-        if (!footer) return;
+    const footer = sidebar.querySelector('.sidebar-footer');
+    if (!footer) return;
 
-        const name      = (session && session.name)      ? session.name      : 'Unknown';
-        const role      = (session && session.role)      ? session.role      : '';
-        const avatarUrl = (session && session.avatarUrl) ? session.avatarUrl : '';
-        const avatar    = avatarUrl || defaultAvatar(role);
-        const roleLabel = roleDisplayLabel(role);
+    const name      = (session && session.name)      ? session.name      : 'Unknown';
+    const role      = (session && session.role)      ? session.role      : '';
+    const avatarUrl = (session && session.pfp) ? session.pfp : '';
+    const roleLabel = roleDisplayLabel(role);
+    const firstLet  = name.slice(0, 1).toUpperCase();
 
-        footer.innerHTML =
-            '<article class="sidebar-profile-card" data-role="' + role + '" aria-label="' + name + ' profile">' +
-            '<img src="' + avatar + '" alt="' + name + '" class="sidebar-profile-avatar" ' +
-            'onerror="this.src=\'https://i.pravatar.cc/120?img=' + (role === 'admin' ? '12' : '47') + '\'">' +
-            '<div class="sidebar-profile-meta">' +
-            '<strong class="sidebar-profile-name">' + name + '</strong>' +
-            '<span class="sidebar-profile-role">' + roleLabel + '</span>' +
-            '</div>' +
-            '</article>';
+    // Build either an <img> or a letter-avatar <div>
+    const avatarHTML = avatarUrl
+        ? '<img src="' + avatarUrl + '" alt="' + name + '" class="sidebar-profile-avatar" ' +
+          'onerror="this.outerHTML=\'<div class=\\\'sidebar-profile-avatar sidebar-profile-avatar--initials\\\'>' + firstLet + '</div>\'">'
+        : '<div class="sidebar-profile-avatar sidebar-profile-avatar--initials">' + firstLet + '</div>';
 
-        const card = footer.querySelector('.sidebar-profile-card');
-        if (card) {
-            card.addEventListener('click', function () {
-                const dest = role === 'admin'
-                    ? '/FINAL-BACKEND(VBETTER)/Final-Backend/admin/pages/profile.html'
-                    : '/FINAL-BACKEND(VBETTER)/Final-Backend/vet/html/profile.html';
-                if (!window.location.pathname.toLowerCase().endsWith('profile.html')) {
-                    window.location.href = dest;
-                }
-            });
-        }
+    footer.innerHTML =
+        '<article class="sidebar-profile-card" data-role="' + role + '" aria-label="' + name + ' profile">' +
+        avatarHTML +
+        '<div class="sidebar-profile-meta">' +
+        '<strong class="sidebar-profile-name">' + name + '</strong>' +
+        '<span class="sidebar-profile-role">' + roleLabel + '</span>' +
+        '</div>' +
+        '</article>';
+
+    const card = footer.querySelector('.sidebar-profile-card');
+    if (card) {
+        card.addEventListener('click', function () {
+            const dest = role === 'admin'
+                ? '/FINAL-BACKEND(VBETTER)/Final-Backend/admin/pages/profile.html'
+                : '/FINAL-BACKEND(VBETTER)/Final-Backend/vet/html/profile.html';
+            if (!window.location.pathname.toLowerCase().endsWith('profile.html')) {
+                window.location.href = dest;
+            }
+        });
     }
-
+}
     function defaultAvatar(role) {
         const seed = { vet: '47', admin: '12', owner: '33' }[role] || '10';
         return 'https://i.pravatar.cc/120?img=' + seed;

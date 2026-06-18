@@ -42,6 +42,7 @@ try {
             users.phone_number,
             users.password_hash,
             users.account_status,
+            users.profile_photo,
             roles.name AS role_name,
             owner_profiles.verification_status
         FROM users
@@ -99,6 +100,7 @@ try {
             'phone' => $user['phone_number'],
             'role' => $frontendRole,
             'db_role' => $user['role_name'],
+            'pfp'=>$user['profile_photo'],
             'token' => $token
         ]
     ]);

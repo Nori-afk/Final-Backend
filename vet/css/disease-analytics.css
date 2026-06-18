@@ -667,3 +667,102 @@ ul img{
     margin:        10px 0;
     display:       block;
 }
+/* ── Add these to disease-analytics.css ── */
+
+/* Offline fallback warning banner above predicted chart */
+.fallback-warning {
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 3px solid currentColor;
+}
+
+/* Source badge on bar chart values and hotspot list */
+.source-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+    font-weight: 500;
+}
+.source-badge.fallback {
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+}
+.source-badge.model {
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+}
+
+/* RF badge in hotspot action pane */
+.rf-badge {
+    background: var(--color-background-info);
+    border: 1px solid var(--color-border-info);
+    color: var(--color-text-info);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin: 8px 0;
+}
+
+/* ARIMA forecast band in insight panel */
+.arima-forecast {
+    background: var(--color-background-secondary);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+}
+.arima-forecast h4 {
+    font-size: 13px;
+    margin: 0 0 10px 0;
+    color: var(--color-text-primary);
+}
+.arima-forecast h4 small {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin-left: 4px;
+}
+.forecast-band {
+    display: flex;
+    gap: 12px;
+}
+.forecast-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.fc-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+.fc-val {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+.fc-range {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+.fc-sub {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+}
+
+/* Trend badge */
+.trend-badge {
+    font-size: 11px;
+    margin: 8px 0 0 0;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+.trend-rising  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.trend-stable  { background: var(--color-background-warning); color: var(--color-text-warning); }
+.trend-falling { background: var(--color-background-success); color: var(--color-text-success); }
